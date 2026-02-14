@@ -1,18 +1,29 @@
 {
   "name": "memory-bench",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Memory system benchmark — E2E test for nexus-agents memory_query and memory_stats MCP tools",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamzujkowski/memory-bench.git"
+  },
+  "keywords": ["memory", "benchmark", "mcp", "nexus-agents", "e2e-test"],
+  "engines": { "node": ">=22" },
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" }
+  },
+  "files": ["dist", "src", "README.md"],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "lint": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "live": "NEXUS_LIVE=true tsx src/run-live.ts"
   },
-  "keywords": ["memory", "benchmark", "mcp", "nexus-agents", "e2e-test"],
-  "license": "MIT",
   "devDependencies": {
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
