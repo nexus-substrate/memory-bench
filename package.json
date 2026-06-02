@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/williamzujkowski/memory-bench.git"
+    "url": "https://github.com/nexus-substrate/memory-bench.git"
   },
   "keywords": ["memory", "benchmark", "mcp", "nexus-agents", "e2e-test"],
   "engines": { "node": ">=22" },

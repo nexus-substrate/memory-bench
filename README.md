@@ -1,6 +1,6 @@
 # memory-bench
 
-Memory system benchmark for [nexus-agents](https://github.com/williamzujkowski/nexus-agents). E2E test for `memory_query` and `memory_stats` MCP tools.
+Memory system benchmark for [nexus-agents](https://github.com/nexus-substrate/nexus-agents). E2E test for `memory_query` and `memory_stats` MCP tools.
 
 ## Quick start
 
