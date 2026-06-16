@@ -10,6 +10,8 @@ import {
   countAvailableBackends,
   computeSummary,
   runBenchmark,
+  withTimeout,
+  ToolCallTimeoutError,
 } from './benchmark.js';
 import type { BenchmarkConfig, QueryBenchmarkResult } from './types.js';
 import {
@@ -339,5 +341,66 @@ describe('runBenchmark', () => {
       (c) => typeof c['query'] === 'string'
     );
     expect(queryCall?.source).toBe('session');
+  });
+});
+
+// ============================================================================
+// withTimeout
+// ============================================================================
+
+describe('withTimeout', () => {
+  it('rejects with ToolCallTimeoutError when the underlying call hangs', async () => {
+    const caller: ToolCaller = {
+      call: vi.fn(() => new Promise<unknown>(() => {})),
+    };
+
+    const bounded = withTimeout(caller, 10);
+
+    await expect(bounded.call('memory_query', {})).rejects.toBeInstanceOf(
+      ToolCallTimeoutError
+    );
+  });
+
+  it('passes through a fast result', async () => {
+    const caller: ToolCaller = {
+      call: vi.fn(async () => ({ ok: true })),
+    };
+
+    const bounded = withTimeout(caller, 1000);
+
+    await expect(bounded.call('memory_stats', {})).resolves.toEqual({
+      ok: true,
+    });
+  });
+
+  it('propagates an underlying thrown error', async () => {
+    const caller: ToolCaller = {
+      call: vi.fn(async () => {
+        throw new Error('backend exploded');
+      }),
+    };
+
+    const bounded = withTimeout(caller, 1000);
+
+    await expect(bounded.call('memory_query', {})).rejects.toThrow(
+      'backend exploded'
+    );
+  });
+
+  it('aborts the signal on timeout', async () => {
+    let captured: AbortSignal | undefined;
+    const caller: ToolCaller = {
+      call: vi.fn((_toolName: string, args: Record<string, unknown>) => {
+        captured = args['signal'] as AbortSignal;
+        return new Promise<unknown>(() => {});
+      }),
+    };
+
+    const bounded = withTimeout(caller, 10);
+
+    await expect(bounded.call('memory_query', {})).rejects.toBeInstanceOf(
+      ToolCallTimeoutError
+    );
+    expect(captured?.aborted).toBe(true);
   });
 });

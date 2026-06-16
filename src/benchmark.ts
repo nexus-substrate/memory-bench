@@ -23,6 +23,51 @@ export interface ToolCaller {
   call(toolName: string, args: Record<string, unknown>): Promise<unknown>;
 }
 
+/** Default per-call timeout for remote tool calls (ms). */
+export const DEFAULT_TIMEOUT_MS = 30_000;
+
+/** Error thrown when a tool call exceeds its configured timeout. */
+export class ToolCallTimeoutError extends Error {
+  constructor(toolName: string, timeoutMs: number) {
+    super(`Tool call '${toolName}' timed out after ${timeoutMs}ms`);
+    this.name = 'ToolCallTimeoutError';
+  }
+}
+
+/**
+ * Wrap a ToolCaller so every call is bounded by `timeoutMs`.
+ *
+ * Uses an AbortController combined with a timer, guaranteeing the returned
+ * promise settles even if the underlying call hangs forever.
+ */
+export function withTimeout(
+  caller: ToolCaller,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
+): ToolCaller {
+  return {
+    call(toolName: string, args: Record<string, unknown>): Promise<unknown> {
+      const controller = new AbortController();
+      const callArgs = { ...args, signal: controller.signal };
+      return new Promise<unknown>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          controller.abort();
+          reject(new ToolCallTimeoutError(toolName, timeoutMs));
+        }, timeoutMs);
+        caller.call(toolName, callArgs).then(
+          (value) => {
+            clearTimeout(timer);
+            resolve(value);
+          },
+          (err) => {
+            clearTimeout(timer);
+            reject(err);
+          }
+        );
+      });
+    },
+  };
+}
+
 // ============================================================================
 // Individual steps
 // ============================================================================
@@ -73,17 +118,20 @@ export async function runBenchmark(
   caller: ToolCaller,
   config: BenchmarkConfig
 ): Promise<BenchmarkResult> {
+  // Bound every remote call so a hung server can't make the benchmark hang.
+  const boundedCaller = withTimeout(caller, config.timeoutMs);
+
   // Step 1: Collect stats
   let stats: MemoryStatsResponse | null = null;
   if (config.includeStats !== false) {
-    stats = await fetchStats(caller);
+    stats = await fetchStats(boundedCaller);
   }
 
   // Step 2: Run all queries
   const queryResults: QueryBenchmarkResult[] = [];
   for (const bench of config.queries) {
     const { result, durationMs } = await runQuery(
-      caller,
+      boundedCaller,
       bench.query,
       config.source,
       bench.limit

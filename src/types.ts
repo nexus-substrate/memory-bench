@@ -113,6 +113,8 @@ export interface BenchmarkConfig {
   readonly includeStats?: boolean;
   /** Filter memory source. */
   readonly source?: MemoryQueryInput['source'];
+  /** Per-call timeout (ms) for remote tool calls. Omit to use the default. */
+  readonly timeoutMs?: number;
 }
 
 export interface QueryBenchmark {
