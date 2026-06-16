@@ -18,12 +18,6 @@ pnpm build       # Compile to dist/
 | `memory_query` | Query across all memory backends with unified results |
 | `memory_stats` | Get memory system statistics dashboard |
 
-## Live integration mode
-
-```bash
-NEXUS_LIVE=true npx tsx src/run-live.ts
-```
-
 ## License
 
 MIT

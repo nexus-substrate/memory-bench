@@ -19,11 +19,9 @@
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit",
-    "live": "NEXUS_LIVE=true tsx src/run-live.ts"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.2.6",
     "@types/node": "^22.0.0"
